@@ -2,6 +2,10 @@
 pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
 pip install pillow==9.5
 打开utils/loss_tal.py文件，到第167行，将p改为p[0]
+<<<<<<< HEAD
+=======
+conda install pytorch==2.2.2 torchvision==0.17.2 torchaudio==2.2.2 pytorch-cuda=12.1 -c pytorch -c nvidia
+>>>>>>> main
 
 git
 git init -b <分支名称> ##初始化创建分支

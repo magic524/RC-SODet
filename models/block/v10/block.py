@@ -806,6 +806,7 @@ class C2fRepCIB(C2f):
         super().__init__(c1, c2, n, shortcut, g, e)
         self.m = nn.ModuleList(RepCIB(self.c, self.c, shortcut, e=1.0, lk=lk) for _ in range(n))
 ##########################################################
+####all rep####
 class CIB2(nn.Module): 
     """Standard bottleneck."""
 
@@ -816,11 +817,11 @@ class CIB2(nn.Module):
         super().__init__()
         c_ = int(c2 * e)  # hidden channels
         self.cv1 = nn.Sequential(
-            Conv(c1, c1, 3, g=c1),
-            Conv(c1, 2 * c_, 1),
-            MODSConv(2 * c_, 2 * c_, 3, g=2 * c_),
-            Conv(2 * c_, c2, 1),
-            MODSConv(c2, c2, 3, g=c2),
+            RepConv(c1, c1, 3, g=c1),
+            RepConv(c1, 2 * c_, 1),
+            RepConv(2 * c_, 2 * c_, 3, g=2 * c_),
+            RepConv(2 * c_, c2, 1),
+            RepConv(c2, c2, 3, g=c2),
         )
     
         self.add = shortcut and c1 == c2

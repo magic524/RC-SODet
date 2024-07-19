@@ -189,10 +189,10 @@ def run(
 
 def parse_opt():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--weights', nargs='+', type=str, default=ROOT / 'D:\\BaiduSyncdisk\\CIB\\weight\\v9c_2C2fRepCIB_DC2best.pt', help='model path or triton URL')
-    parser.add_argument('--source', type=str, default=ROOT / 'D:\\pythondata\\gitYOLO\\yolov9-main\\data\\images\\0000001_05999_d_0000011.jpg', help='file/dir/URL/glob/screen/0(webcam)')
+    parser.add_argument('--weights', nargs='+', type=str, default=ROOT / 'D:\\BaiduSyncdisk\\CIB\\weight\\noReplast.pt', help='model path or triton URL')
+    parser.add_argument('--source', type=str, default=ROOT / 'D:\\pythondata\\gitYOLO\\yolov9-main\\data\\images\\6851CD5C657122F957C4F6013F705999.png', help='file/dir/URL/glob/screen/0(webcam)')
     parser.add_argument('--data', type=str, default=ROOT / 'D:\\pythondata\\gitYOLO\\yolov9-main\\data\\VisDrone.yaml', help='(optional) dataset.yaml path')
-    parser.add_argument('--imgsz', '--img', '--img-size', nargs='+', type=int, default=[384, 640], help='inference size h,w')
+    parser.add_argument('--imgsz', '--img', '--img-size', nargs='+', type=int, default=[640], help='inference size h,w')
     parser.add_argument('--conf-thres', type=float, default=0.25, help='confidence threshold')
     parser.add_argument('--iou-thres', type=float, default=0.45, help='NMS IoU threshold')
     parser.add_argument('--max-det', type=int, default=1000, help='maximum detections per image')
