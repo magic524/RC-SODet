@@ -81,19 +81,19 @@ class C2fRepCIB(C2f):
         super().__init__(c1, c2, n, shortcut, g, e)
         self.m = nn.ModuleList(RepCIB(self.c, self.c, shortcut, e=1.0, lk=lk) for _ in range(n))
 
-def evaluate_model(model, input_data, iterations=30):
+def evaluate_model(model, input_size, iterations=1000):
     model.eval()
     start_time = time.time()
     with torch.no_grad():
         for _ in range(iterations):
+            input_data = torch.randn(1, 3, input_size, input_size).float().cuda()  # 每次生成不同的输入数据
             output = model(input_data)
             torch.cuda.synchronize()  # 确保GPU计算完成
     end_time = time.time()
     return (end_time - start_time) / iterations
 
-# 准备输入数据
+# 准备输入数据大小
 input_size = 640  # 根据实际模型配置调整
-input_data = torch.randn(1, 3, input_size, input_size).float().cuda()  # 确保输入数据在GPU上
 
 # 初始化模型并移动到GPU
 model_cib = CIB(3, 3, shortcut=True, e=0.5).cuda()
@@ -103,11 +103,11 @@ model_rep_cib = RepCIB(3, 3, shortcut=True, e=0.5).cuda()
 model_c2f_rep_cib = C2fRepCIB(3, 3, n=2, shortcut=False, lk=False, g=1, e=0.5).cuda()
 
 # 评估模型
-time_cib = evaluate_model(model_cib, input_data)
-time_c2f_cib = evaluate_model(model_c2f_cib, input_data)
+time_cib = evaluate_model(model_cib, input_size)
+time_c2f_cib = evaluate_model(model_c2f_cib, input_size)
 
-time_rep_cib = evaluate_model(model_rep_cib, input_data)
-time_c2f_rep_cib = evaluate_model(model_c2f_rep_cib, input_data)
+time_rep_cib = evaluate_model(model_rep_cib, input_size)
+time_c2f_rep_cib = evaluate_model(model_c2f_rep_cib, input_size)
 
 print(f'CIB 模型平均推理时间: {time_cib} 秒')
 print(f'C2fCIB 模型平均推理时间: {time_c2f_cib} 秒')
