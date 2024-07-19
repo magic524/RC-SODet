@@ -1,98 +1,53 @@
+import time
 import torch
-import torch.nn as nn
-import torchvision.transforms as transforms
-from PIL import Image
-import matplotlib.pyplot as plt
+from models.yolo import Model  # 假设模型结构在 models/yolo.py 中定义
 
-# Define Conv and RepConv classes (simplified versions)
-class Conv(nn.Module):
-    def __init__(self, in_channels, out_channels, kernel_size, stride=1, padding=0, groups=1):
-        super(Conv, self).__init__()
-        self.conv = nn.Conv2d(in_channels, out_channels, kernel_size, stride, padding, groups=groups, bias=False)
-        self.bn = nn.BatchNorm2d(out_channels)
-        self.act = nn.SiLU()
+# 加载权重文件
+checkpoint = torch.load('D:\\BaiduSyncdisk\\result\\visdrone\\v9c-noRep-vd200\\weights\\best.pt')
 
-    def forward(self, x):
-        return self.act(self.bn(self.conv(x)))
+# 提取模型对象
+model_before = checkpoint['model']
+model_before.eval()
 
-class RepConv(nn.Module):
-    def __init__(self, in_channels, out_channels, kernel_size, stride=1, padding=1, groups=1):
-        super(RepConv, self).__init__()
-        self.conv = nn.Conv2d(in_channels, out_channels, kernel_size, stride, padding, groups=groups, bias=False)
-        self.bn = nn.BatchNorm2d(out_channels)
-        self.act = nn.SiLU()
+# 将模型权重转换为 float 类型
+model_before = model_before.float()
 
-    def forward(self, x):
-        return self.act(self.bn(self.conv(x)))
+# 准备输入数据（假设输入大小为 640x640）
+input_size = 640  # 根据实际模型配置调整
+input_data = torch.randn(1, 3, input_size, input_size).float()  # 转换为 float tensor 类型
 
-# Define RepCIB class
-class RepCIB(nn.Module):
-    """Standard bottleneck."""
+# 计时
+start_time = time.time()
+with torch.no_grad():
+    for _ in range(50):  # 多次推理取平均
+        output = model_before(input_data)
+end_time = time.time()
 
-    def __init__(self, c1, c2, shortcut=True, e=0.5, lk=False):
-        """Initializes a bottleneck module with given input/output channels, shortcut option, group, kernels, and
-        expansion.
-        """
-        super().__init__()
-        c_ = int(c2 * e)  # hidden channels
-        self.cv1 = nn.Sequential(
-            Conv(c1, c1, 3, padding=1, groups=c1),
-            Conv(c1, 2 * c_, 1),
-            RepConv(2 * c_, 2 * c_, 3, padding=1, groups=2 * c_) if not lk else Conv(2 * c_, 2 * c_, 3, padding=1, groups=2 * c_),
-            Conv(2 * c_, c2, 1),
-            RepConv(c2, c2, 3, padding=1, groups=c2),
-            nn.BatchNorm2d(c2),
-            nn.SiLU()
-        )
-        self.add = shortcut and c1 == c2
+time_before = (end_time - start_time) / 50  # 这里要除以 10 而不是 100
+print(f'重参数化前模型平均推理时间: {time_before} 秒')
 
-    def forward(self, x):
-        """'forward()' applies the YOLO FPN to input data."""
-        return x + self.cv1(x) if self.add else self.cv1(x)
+#############after
 
-# Load and preprocess an example image
-def load_image(image_path):
-    image = Image.open(image_path).convert('RGB')
-    transform = transforms.Compose([
-        transforms.Resize((256, 256)),
-        transforms.ToTensor(),
-    ])
-    image = transform(image).unsqueeze(0)  # Add batch dimension
-    return image
+# 加载重参数化后的权重文件
+checkpoint_after = torch.load('D:\\BaiduSyncdisk\\result\\visdrone\\v9c_2RepC2fCIB_DC2_vd200\\weights\\2RepC2fCIB_DC2best_vd200.pt')
 
-def visualize_feature_maps(feature_maps, title):
-    num_maps = feature_maps.size(1)
-    fig, axes = plt.subplots(1, min(num_maps, 8), figsize=(15, 15))  # Show up to 8 feature maps
-    for i in range(min(num_maps, 8)):
-        axes[i].imshow(feature_maps[0, i].detach().cpu().numpy(), cmap='viridis')
-        axes[i].axis('off')
-    plt.suptitle(title)
-    plt.show()
+# 提取重参数化后的模型对象
+model_after = checkpoint_after['model']
+model_after.eval()
 
-# Example usage
-image_path = 'D:\\pythondata\\gitYOLO\\yolov9-main\\data\\images\\0000001_05999_d_0000011.jpg'  # Replace with your image path
-image = load_image(image_path)
+# 将模型权重转换为 float 类型
+model_after = model_after.float()
 
-# Define the model
-model = RepCIB(c1=3, c2=64, shortcut=True, e=0.5, lk=False)
+# 准备输入数据（假设输入大小为 640x640）
+input_size = 640  # 根据实际模型配置调整
+input_data = torch.randn(1, 3, input_size, input_size).float()  # 转换为 float tensor 类型
 
-# Forward pass and visualize feature maps
-layer_outputs = []
+# 计时
+start_time = time.time()
+with torch.no_grad():
+    for _ in range(50):  # 多次推理取平均
+        output = model_after(input_data)
+end_time = time.time()
 
-# Hook to capture intermediate outputs
-def hook_fn(module, input, output):
-    layer_outputs.append((module, output))
-
-# Register hooks for each layer in the model
-for layer in model.cv1:
-    layer.register_forward_hook(hook_fn)
-
-# Forward pass
-output = model(image)
-
-# Visualize all collected feature maps
-for i, (layer, feature_maps) in enumerate(layer_outputs):
-    visualize_feature_maps(feature_maps, f'Layer {i+1}: {layer.__class__.__name__}')
-
-# Visualize final output
-visualize_feature_maps(output, 'Final Output')
+time_after = (end_time - start_time) / 50  # 这里要除以 10 而不是 100
+print(f'重参数化后模型平均推理时间: {time_after} 秒')
