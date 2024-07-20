@@ -52,7 +52,7 @@ head:
    # up-concat merge
    [-1, 1, nn.Upsample, [None, 2, 'nearest']], # 11
    [[-1, 7], 1, Concat, [1]],  # 12 cat backbone P4
-   [-1, 2, C2fRepCIB, [1024,True]], # 13 #################################
+   [-1, 2, C2fRepCIB, [840,True]], # 13 #################################
 
    # elan-2 block
    [-1, 1, RepNCSPELAN4, [360, 360, 180, 1]],  # 14
@@ -60,7 +60,7 @@ head:
    # up-concat merge
    [-1, 1, nn.Upsample, [None, 2, 'nearest']], # 15
    [[-1, 5], 1, Concat, [1]],  # 16 cat backbone P3
-   [-1, 2, C2fRepCIB, [1024,True]],  # 17 #############################
+   [-1, 2, C2fRepCIB, [600,True]],  # 17 #############################
 
    # elan-2 block
    [-1, 1, RepNCSPELAN4, [240, 240, 120, 1]],  # 18
