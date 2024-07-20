@@ -81,16 +81,25 @@ class C2fRepCIB(C2f):
         super().__init__(c1, c2, n, shortcut, g, e)
         self.m = nn.ModuleList(RepCIB(self.c, self.c, shortcut, e=1.0, lk=lk) for _ in range(n))
 
-def evaluate_model(model, input_size, iterations=100):
+# 假设已经定义了CIB, C2fCIB, RepCIB, C2fRepCIB类
+# 此处省略这些类的定义
+
+def evaluate_model(model, input_size, iterations=50):
     model.eval()
-    start_time = time.time()
+    total_time = 0
     with torch.no_grad():
-        for _ in range(iterations):
+        for i in range(1, iterations + 1):
+            start_time = time.time()
             input_data = torch.randn(1, 3, input_size, input_size).float().cuda()  # 每次生成不同的输入数据
             output = model(input_data)
             torch.cuda.synchronize()  # 确保GPU计算完成
-    end_time = time.time()
-    return (end_time - start_time) / iterations
+            end_time = time.time()
+            iter_time = end_time - start_time
+            total_time += iter_time
+            if i % 10 == 0:
+                avg_time = total_time / i
+                print(f'Iteration {i} - 当前平均推理时间: {avg_time:.4f} 秒')
+    return total_time / iterations
 
 # 准备输入数据大小
 input_size = 640  # 根据实际模型配置调整
@@ -104,14 +113,11 @@ model_c2f_rep_cib = C2fRepCIB(3, 3, n=2, shortcut=False, lk=False, g=1, e=0.5).c
 
 # 评估模型
 time_cib = evaluate_model(model_cib, input_size)
-time_c2f_cib = evaluate_model(model_c2f_cib, input_size)
+print(f'CIB 模型平均推理时间: {time_cib:.4f} 秒')
+# time_c2f_cib = evaluate_model(model_c2f_cib, input_size)
+# print(f'C2fCIB 模型平均推理时间: {time_c2f_cib:.4f} 秒')
 
 time_rep_cib = evaluate_model(model_rep_cib, input_size)
-time_c2f_rep_cib = evaluate_model(model_c2f_rep_cib, input_size)
-
-print(f'CIB 模型平均推理时间: {time_cib} 秒')
-print(f'C2fCIB 模型平均推理时间: {time_c2f_cib} 秒')
-
-print(f'RepCIB 模型平均推理时间: {time_rep_cib} 秒')
-print(f'C2fRepCIB 模型平均推理时间: {time_c2f_rep_cib} 秒')
-
+print(f'RepCIB 模型平均推理时间: {time_rep_cib:.4f} 秒')
+# time_c2f_rep_cib = evaluate_model(model_c2f_rep_cib, input_size)
+# print(f'C2fRepCIB 模型平均推理时间: {time_c2f_rep_cib:.4f} 秒')

@@ -806,6 +806,66 @@ class C2fRepCIB(C2f):
         super().__init__(c1, c2, n, shortcut, g, e)
         self.m = nn.ModuleList(RepCIB(self.c, self.c, shortcut, e=1.0, lk=lk) for _ in range(n))
 ##########################################################
+class RepCIB2(nn.Module): 
+    """Standard bottleneck with reparameterization."""
+
+    def __init__(self, c1, c2, shortcut=True, e=0.5, lk=False):
+        """Initializes a bottleneck module with given input/output channels, shortcut option, group, kernels, and
+        expansion.
+        """
+        super().__init__()
+        c_ = int(c2 * e)  # hidden channels
+        self.cv1 = nn.Sequential(
+            Conv(c1, c1, 3, padding=1, groups=c1),
+            Conv(c1, 2 * c_, 1),
+            RepConv(2 * c_, 2 * c_, 3, padding=1, groups=2 * c_) if not lk else RepVGGDW(2 * c_),
+            Conv(2 * c_, c2, 1),
+            RepConv(c2, c2, 3, padding=1, groups=c2),
+            nn.BatchNorm2d(c2),
+            nn.SiLU()
+        )
+    
+        self.add = shortcut and c1 == c2
+        self.reparam = False  # Flag to indicate reparameterization
+
+    def forward(self, x):
+        """Applies the forward pass."""
+        if self.reparam:
+            return self.rep_conv(x) if self.add else self.cv1(x)
+        else:
+            return x + self.cv1(x) if self.add else self.cv1(x)
+
+    def reparameterize(self):
+        """Reparameterizes the model for inference."""
+        kernel, bias = self.get_reparam_kernel_and_bias()
+        self.rep_conv = nn.Conv2d(
+            self.cv1[0].conv.in_channels, self.cv1[-4].conv.out_channels,
+            kernel_size=kernel.shape[2:], padding=self.cv1[0].conv.padding, groups=self.cv1[0].conv.groups
+        )
+        self.rep_conv.weight.data = kernel
+        self.rep_conv.bias.data = bias
+        self.reparam = True
+
+    def get_reparam_kernel_and_bias(self):
+        """Computes the reparameterized kernel and bias."""
+        # This function combines the weights and biases of the sequential layers into a single Conv2D layer
+        # Note: This is a simplified example and assumes certain properties about the layers
+        kernel = self.cv1[0].conv.weight.data
+        bias = self.cv1[0].conv.bias.data
+        for i in range(1, len(self.cv1) - 2):
+            conv_layer = self.cv1[i].conv
+            kernel = F.conv2d(kernel, conv_layer.weight.data.permute(1, 0, 2, 3))
+            bias = bias + conv_layer.bias.data
+        return kernel, bias
+class C2fRepCIB2(C2f):
+    """Faster Implementation of CSP Bottleneck with 2 convolutions."""
+
+    def __init__(self, c1, c2, n=2, shortcut=False, lk=False, g=1, e=0.5):
+        """Initialize CSP bottleneck layer with two convolutions with arguments ch_in, ch_out, number, shortcut, groups,
+        expansion.
+        """
+        super().__init__(c1, c2, n, shortcut, g, e)
+        self.m = nn.ModuleList(RepCIB2(self.c, self.c, shortcut, e=1.0, lk=lk) for _ in range(n))
 ####all rep####
 class CIB2(nn.Module): 
     """Standard bottleneck."""
@@ -818,9 +878,9 @@ class CIB2(nn.Module):
         c_ = int(c2 * e)  # hidden channels
         self.cv1 = nn.Sequential(
             RepConv(c1, c1, 3, g=c1),
-            RepConv(c1, 2 * c_, 1),
+            Conv(c1, 2 * c_, 1),
             RepConv(2 * c_, 2 * c_, 3, g=2 * c_),
-            RepConv(2 * c_, c2, 1),
+            Conv(2 * c_, c2, 1),
             RepConv(c2, c2, 3, g=c2),
         )
     
@@ -840,6 +900,64 @@ class C2fCIB2(C2f):
         super().__init__(c1, c2, n, shortcut, g, e)
         self.m = nn.ModuleList(CIB2(self.c, self.c, shortcut, e=1.0, lk=lk) for _ in range(n))
         
+###############################################################################
+class CIB3(nn.Module): 
+    """Standard bottleneck."""
+
+    def __init__(self, c1, c2, shortcut=True, e=0.5, lk=False):
+        """Initializes a bottleneck module with given input/output channels, shortcut option, and expansion."""
+        super().__init__()
+        c_ = int(c2 * e)  # hidden channels
+        self.cv1 = nn.Sequential(
+            Conv(c1, c1, 3, padding=1, groups=c1),
+            Conv(c1, 2 * c_, 1),
+            Conv(2 * c_, 2 * c_, 3, padding=1, groups=2 * c_) if not lk else RepVGGDW(2 * c_),
+            Conv(2 * c_, c2, 1),
+            Conv(c2, c2, 3, padding=1, groups=c2),
+        )
+        self.add = shortcut and c1 == c2
+        self.reparam = False  # Flag to indicate reparameterization
+
+    def forward(self, x):
+        """Applies the forward pass."""
+        if self.reparam:
+            return self.rep_conv(x) if self.add else self.cv1(x)
+        else:
+            return x + self.cv1(x) if self.add else self.cv1(x)
+
+    def reparameterize(self):
+        """Reparameterizes the model for inference."""
+        # Create a new nn.Conv2d module to replace the sequential layers
+        kernel, bias = self.get_reparam_kernel_and_bias()
+        self.rep_conv = nn.Conv2d(
+            self.cv1[0].conv.in_channels, self.cv1[-1].conv.out_channels,
+            kernel_size=kernel.shape[2:], padding=self.cv1[0].conv.padding, groups=self.cv1[0].conv.groups
+        )
+        self.rep_conv.weight.data = kernel
+        self.rep_conv.bias.data = bias
+        self.reparam = True
+
+    def get_reparam_kernel_and_bias(self):
+        """Computes the reparameterized kernel and bias."""
+        # This function combines the weights and biases of the sequential layers into a single Conv2D layer
+        # Note: This is a simplified example and assumes certain properties about the layers
+        kernel = self.cv1[0].conv.weight.data
+        bias = self.cv1[0].conv.bias.data
+        for i in range(1, len(self.cv1)):
+            conv_layer = self.cv1[i].conv
+            kernel = F.conv2d(kernel, conv_layer.weight.data.permute(1, 0, 2, 3))
+            bias = bias + conv_layer.bias.data
+        return kernel, bias
+
+class C2fCIB3(C2f):
+    """Faster Implementation of CSP Bottleneck with 2 convolutions."""
+
+    def __init__(self, c1, c2, n=2, shortcut=False, lk=False, g=1, e=0.5):
+        """Initialize CSP bottleneck layer with two convolutions with arguments ch_in, ch_out, number, shortcut, groups,
+        expansion.
+        """
+        super().__init__(c1, c2, n, shortcut, g, e)
+        self.m = nn.ModuleList(CIB3(self.c, self.c, shortcut, e=1.0, lk=lk) for _ in range(n))
 ###############################################################################
 
 class Attention(nn.Module):
