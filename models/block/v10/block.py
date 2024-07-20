@@ -857,7 +857,7 @@ class RepCIB2(nn.Module):
             kernel = F.conv2d(kernel, conv_layer.weight.data.permute(1, 0, 2, 3))
             bias = bias + conv_layer.bias.data
         return kernel, bias
-class C2fRepCIB(C2f):
+class C2fRepCIB2(C2f):
     """Faster Implementation of CSP Bottleneck with 2 convolutions."""
 
     def __init__(self, c1, c2, n=2, shortcut=False, lk=False, g=1, e=0.5):
