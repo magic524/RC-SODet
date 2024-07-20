@@ -29,53 +29,47 @@ def load_image(image_path):
     image = image.unsqueeze(0)  # 增加批次维度
     return image.to(device)  # 将图像移动到 GPU
 
+# 评估模型推理时间
+def evaluate_model(model, input_size, iterations=200):
+    model.eval()
+    total_time = 0
+    with torch.no_grad():
+        for i in range(1, iterations + 1):
+            input_data = torch.randn(1, 3, input_size, input_size).float().to(device)  # 每次生成不同的输入数据
+            start_time = time.time()
+            output = model(input_data)
+            torch.cuda.synchronize()  # 确保GPU计算完成
+            end_time = time.time()
+            iter_time = end_time - start_time
+            total_time += iter_time
+            if i % 100 == 0:
+                avg_time = total_time / i
+                print(f'Iteration {i} - 当前平均推理时间: {avg_time:.4f} 秒')
+    return total_time / iterations
+
+# 准备输入数据大小
+input_size = 640  # 根据实际模型配置调整
+
 # 加载模型权重文件
 checkpoint_path_before = 'D:\\BaiduSyncdisk\\result\\visdrone\\v9c-noRep-vd200\\weights\\best.pt'
 checkpoint_before = torch.load(checkpoint_path_before, map_location=device)
 
-# 提取模型对象
+# 提取模型对象并移动到GPU
 model_before = checkpoint_before['model']
-model_before.eval()
+model_before = model_before.float().to(device)
 
-# 将模型权重转换为 float 类型
-model_before = model_before.float().to(device)  # 将模型移动到 GPU
-
-# 加载图像
-image_path = 'D:\\pythondata\\gitYOLO\\yolov9-main\\data\\images\\0000205_02019_d_0000201.jpg'  # 替换为你的图像路径
-input_data = load_image(image_path)
-
-# 计时
-start_time = time.time()
-with torch.no_grad():
-    for _ in range(200):  # 多次推理取平均
-        output = model_before(input_data)
-end_time = time.time()
-
-time_before = (end_time - start_time) / 200
-print(f'重参数化前模型平均推理时间: {time_before} 秒')
-
-#############after
+# 评估重参数化前模型
+time_before = evaluate_model(model_before, input_size)
+print(f'重参数化前模型平均推理时间: {time_before:.4f} 秒')
 
 # 加载重参数化后的权重文件
 checkpoint_path_after = 'D:\\BaiduSyncdisk\\result\\visdrone\\v9c_2RepC2fCIB_DC2_vd200\\weights\\2RepC2fCIB_DC2best_vd200.pt'
 checkpoint_after = torch.load(checkpoint_path_after, map_location=device)
 
-# 提取重参数化后的模型对象
+# 提取重参数化后的模型对象并移动到GPU
 model_after = checkpoint_after['model']
-model_after.eval()
+model_after = model_after.float().to(device)
 
-# 将模型权重转换为 float 类型
-model_after = model_after.float().to(device)  # 将模型移动到 GPU
-
-# 加载图像
-input_data = load_image(image_path)
-
-# 计时
-start_time = time.time()
-with torch.no_grad():
-    for _ in range(200):  # 多次推理取平均
-        output = model_after(input_data)
-end_time = time.time()
-
-time_after = (end_time - start_time) / 200
-print(f'重参数化后模型平均推理时间: {time_after} 秒')
+# 评估重参数化后模型
+time_after = evaluate_model(model_after, input_size)
+print(f'重参数化后模型平均推理时间: {time_after:.4f} 秒')
