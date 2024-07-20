@@ -10,7 +10,7 @@ width_multiple: 1.0  # layer channel multiple ##宽度，宽度控制通道数ar
 # anchors
 anchors: 3
 
-# YOLOv9 backbone
+# YOLOv9 backbone ##[from,number,module,args]
 backbone:
   [                       ##[from,number,module,args]https://blog.csdn.net/weixin_43694096/article/details/124695537
    [-1, 1, Silence, []],  ##第0层，第一个-1表示以上层输出作为本层输入,1表示模块重复次数
