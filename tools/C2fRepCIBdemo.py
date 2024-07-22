@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torchvision.transforms as transforms
-from PIL import Image
+from PIL import Image, ImageEnhance
 import matplotlib.pyplot as plt
 import os
 import numpy as np
@@ -84,11 +84,17 @@ def load_image(image_path):
     image = transform(image).unsqueeze(0)  # Add batch dimension
     return image, original_size
 
-def enhance_image(image_tensor):
+def enhance_image(image_tensor, brightness_factor=4.0):
     image_array = image_tensor.detach().cpu().numpy()
     image_array = (image_array - image_array.min()) / (image_array.max() - image_array.min())
     image_array = np.uint8(255 * image_array)
-    return Image.fromarray(image_array)
+    image_pil = Image.fromarray(image_array)
+    
+    # Adjust the brightness
+    enhancer = ImageEnhance.Brightness(image_pil)
+    enhanced_image = enhancer.enhance(brightness_factor)
+    
+    return enhanced_image
 
 def save_feature_maps(feature_maps, layer_name, save_dir, input_size, max_maps=3):
     num_maps = min(feature_maps.size(1), max_maps)
@@ -99,7 +105,7 @@ def save_feature_maps(feature_maps, layer_name, save_dir, input_size, max_maps=3
         feature_map_resized = transforms.functional.resize(
             enhance_image(feature_maps[0, i]), (input_size[1], input_size[0])
         )
-        plt.imshow(feature_map_resized, cmap='magma')
+        plt.imshow(feature_map_resized, cmap='viridis')
         plt.axis('off')
         save_path = os.path.join(save_dir, f"{layer_name}_feature_map_{i+1}.png")
         plt.savefig(save_path, bbox_inches='tight', pad_inches=0)
