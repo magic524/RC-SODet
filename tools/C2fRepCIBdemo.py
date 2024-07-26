@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import os
 import numpy as np
 
+
 # Define Conv and RepConv classes (simplified versions)
 class Conv(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size, stride=1, padding=0, groups=1):
@@ -129,7 +130,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 image = image.to(device)
 
 # Define the model
-model = C2fRepCIB(c1=3, c2=64, shortcut=True, e=0.5, lk=False).to(device)
+model = C2fRepCIB(c1=3, c2=64, shortcut=True, e=0.5).to(device)#####################
 
 # Forward pass
 output = model(image)

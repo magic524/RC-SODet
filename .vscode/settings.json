@@ -1,0 +1,6 @@
+{
+    "python.analysis.extraPaths": [
+        "./models/block/v10",
+        "./models"
+    ]
+}

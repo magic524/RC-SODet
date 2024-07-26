@@ -807,7 +807,7 @@ class C2fRepCIB(C2f):
         self.m = nn.ModuleList(RepCIB(self.c, self.c, shortcut, e=1.0, lk=lk) for _ in range(n))
 ##########################################################
 class RepCIB2(nn.Module): 
-    """Standard bottleneck with reparameterization."""
+    """Standard bottleneck."""
 
     def __init__(self, c1, c2, shortcut=True, e=0.5, lk=False):
         """Initializes a bottleneck module with given input/output channels, shortcut option, group, kernels, and
@@ -816,47 +816,50 @@ class RepCIB2(nn.Module):
         super().__init__()
         c_ = int(c2 * e)  # hidden channels
         self.cv1 = nn.Sequential(
-            Conv(c1, c1, 3, padding=1, groups=c1),
+            Conv(c1, c1, 3, g=c1),
             Conv(c1, 2 * c_, 1),
-            RepConv(2 * c_, 2 * c_, 3, padding=1, groups=2 * c_) if not lk else RepVGGDW(2 * c_),
+            RepConv(2 * c_, 2 * c_, 3, g=2 * c_) if not lk else RepVGGDW(2 * c_),
             Conv(2 * c_, c2, 1),
-            RepConv(c2, c2, 3, padding=1, groups=c2),
+            RepConv(c2, c2, 3, g=c2),
             nn.BatchNorm2d(c2),
             nn.SiLU()
         )
-    
         self.add = shortcut and c1 == c2
-        self.reparam = False  # Flag to indicate reparameterization
-
-    def forward(self, x):
-        """Applies the forward pass."""
-        if self.reparam:
-            return self.rep_conv(x) if self.add else self.cv1(x)
-        else:
-            return x + self.cv1(x) if self.add else self.cv1(x)
+        self.reparam = False
 
     def reparameterize(self):
-        """Reparameterizes the model for inference."""
-        kernel, bias = self.get_reparam_kernel_and_bias()
-        self.rep_conv = nn.Conv2d(
-            self.cv1[0].conv.in_channels, self.cv1[-4].conv.out_channels,
-            kernel_size=kernel.shape[2:], padding=self.cv1[0].conv.padding, groups=self.cv1[0].conv.groups
-        )
-        self.rep_conv.weight.data = kernel
-        self.rep_conv.bias.data = bias
+        """Reparameterize the convolutional layers for inference."""
+        if self.reparam:
+            return
+        
+        # Placeholder for the reparameterization logic
+        # This should involve converting the RepConv/RepVGGDW layers to standard Conv layers.
+        # Example:
+        # new_cv1 = nn.Sequential(
+        #     convert_to_conv(self.cv1[0]),  # Convert each layer to a standard Conv layer
+        #     ...
+        # )
+        
+        # Here `convert_to_conv` should be a function that takes a RepConv or RepVGGDW and returns an equivalent Conv layer
+        # self.cv1 = new_cv1
+        
         self.reparam = True
 
-    def get_reparam_kernel_and_bias(self):
-        """Computes the reparameterized kernel and bias."""
-        # This function combines the weights and biases of the sequential layers into a single Conv2D layer
-        # Note: This is a simplified example and assumes certain properties about the layers
-        kernel = self.cv1[0].conv.weight.data
-        bias = self.cv1[0].conv.bias.data
-        for i in range(1, len(self.cv1) - 2):
-            conv_layer = self.cv1[i].conv
-            kernel = F.conv2d(kernel, conv_layer.weight.data.permute(1, 0, 2, 3))
-            bias = bias + conv_layer.bias.data
-        return kernel, bias
+    def forward(self, x):
+        """'forward()' applies the YOLO FPN to input data."""
+        if not self.reparam:
+            self.reparameterize()
+        
+        # Debugging: print input tensor size
+        print(f"Input size: {x.shape}")
+        
+        output = self.cv1(x)
+        
+        # Debugging: print output tensor size
+        print(f"Output size: {output.shape}")
+
+        return x + output if self.add else output
+    
 class C2fRepCIB2(C2f):
     """Faster Implementation of CSP Bottleneck with 2 convolutions."""
 
@@ -866,6 +869,8 @@ class C2fRepCIB2(C2f):
         """
         super().__init__(c1, c2, n, shortcut, g, e)
         self.m = nn.ModuleList(RepCIB2(self.c, self.c, shortcut, e=1.0, lk=lk) for _ in range(n))
+
+
 ####all rep####
 class CIB2(nn.Module): 
     """Standard bottleneck."""
