@@ -771,7 +771,7 @@ class C2fCIB(C2f):
         self.m = nn.ModuleList(CIB(self.c, self.c, shortcut, e=1.0, lk=lk) for _ in range(n))
 
 #############new###########
-class RepCIB(nn.Module): 
+class RCB(nn.Module): 
     """Standard bottleneck."""
 
     def __init__(self, c1, c2, shortcut=True, e=0.5, lk=False):
@@ -796,7 +796,7 @@ class RepCIB(nn.Module):
         """'forward()' applies the YOLO FPN to input data."""
         return x + self.cv1(x) if self.add else self.cv1(x)
 
-class C2fRepCIB(C2f):
+class C2fRCB(C2f):
     """Faster Implementation of CSP Bottleneck with 2 convolutions."""
 
     def __init__(self, c1, c2, n=2, shortcut=False, lk=False, g=1, e=0.5):
@@ -804,7 +804,7 @@ class C2fRepCIB(C2f):
         expansion.
         """
         super().__init__(c1, c2, n, shortcut, g, e)
-        self.m = nn.ModuleList(RepCIB(self.c, self.c, shortcut, e=1.0, lk=lk) for _ in range(n))
+        self.m = nn.ModuleList(RCB(self.c, self.c, shortcut, e=1.0, lk=lk) for _ in range(n))
 ##########################################################
 class RepCIB2(nn.Module): 
     """Standard bottleneck."""
