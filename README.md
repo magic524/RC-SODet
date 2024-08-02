@@ -31,17 +31,14 @@ pip install -r requirements.txt
 
 ## Evaluation
 
-[`SOD-RepCIN-C.pt`](https://github.com/magic524/yolov9-main/releases/download/SOD-RepCIN/SOD-RepCINc_vd200.pt) [`yolov9-e-converted.pt`](https://github.com/WongKinYiu/yolov9/releases/download/v0.1/yolov9-e-converted.pt) [`yolov9-c.pt`](https://github.com/WongKinYiu/yolov9/releases/download/v0.1/yolov9-c.pt) [`yolov9-e.pt`](https://github.com/WongKinYiu/yolov9/releases/download/v0.1/yolov9-e.pt) [`gelan-c.pt`](https://github.com/WongKinYiu/yolov9/releases/download/v0.1/gelan-c.pt) [`gelan-e.pt`](https://github.com/WongKinYiu/yolov9/releases/download/v0.1/gelan-e.pt)
-
+[`SOD-RepCIN-T.pt`](https://github.com/magic524/SOD-RepCIN/releases/download/download/SOD-RepCINt_vd200.pt) [`SOD-RepCIN-S.pt`](https://github.com/magic524/SOD-RepCIN/releases/download/download/SOD-RepCINs_vd200.pt) [`SOD-RepCIN-M.pt`](https://github.com/magic524/SOD-RepCIN/releases/download/download/SOD-RepCINm_vd200.pt.pt) [`SOD-RepCIN-C.pt`](https://github.com/magic524/SOD-RepCIN/releases/download/download/SOD-RepCINc_vd200.pt) 
 ``` shell
 # evaluate converted yolov9 models
-python val.py --data data/coco.yaml --img 640 --batch 32 --conf 0.001 --iou 0.7 --device 0 --weights './yolov9-c-converted.pt' --save-json --name yolov9_c_c_640_val
+python val_dual.py --data data/VisDrone.yaml --img 640 --batch 32 --conf 0.001 --iou 0.7 --device 0 --weights '.SOD-RepCIN-C.pt' --save-json --name SOD-RepCIN-C_640_val
 
 # evaluate yolov9 models
-# python val_dual.py --data data/coco.yaml --img 640 --batch 32 --conf 0.001 --iou 0.7 --device 0 --weights './yolov9-c.pt' --save-json --name yolov9_c_640_val
+# python val_dual.py --data data/VisDrone.yaml --img 640 --batch 4 --conf 0.001 --iou 0.7 --device 0 --weights '.SOD-RepCIN-C.pt' --save-json --name SOD-RepCIN-C_640_val
 
-# evaluate gelan models
-# python val.py --data data/coco.yaml --img 640 --batch 32 --conf 0.001 --iou 0.7 --device 0 --weights './gelan-c.pt' --save-json --name gelan_c_640_val
 ```
 
 You will get the results:
