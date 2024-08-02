@@ -39,41 +39,18 @@ python val_dual.py --data data/VisDrone.yaml --img 640 --batch 32 --conf 0.001 -
 # evaluate yolov9 models
 # python val_dual.py --data data/VisDrone.yaml --img 640 --batch 4 --conf 0.001 --iou 0.7 --device 0 --weights '.SOD-RepCIN-C.pt' --save-json --name SOD-RepCIN-C_640_val
 
-```
-
-You will get the results:
-
-```
- Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.530
- Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.702
- Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.578
- Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.362
- Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.585
- Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.693
- Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.392
- Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.652
- Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.702
- Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.541
- Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.760
- Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.844
-```
-
 
 ## Training
 
 Data preparation
+https://docs.ultralytics.com/datasets/detect/visdrone/#what-are-the-main-subsets-of-the-visdrone-dataset-and-their-applications
 
-``` shell
-bash scripts/get_coco.sh
-```
-
-* Download MS COCO dataset images ([train](http://images.cocodataset.org/zips/train2017.zip), [val](http://images.cocodataset.org/zips/val2017.zip), [test](http://images.cocodataset.org/zips/test2017.zip)) and [labels](https://github.com/WongKinYiu/yolov7/releases/download/v0.1/coco2017labels-segments.zip). If you have previously used a different version of YOLO, we strongly recommend that you delete `train2017.cache` and `val2017.cache` files, and redownload [labels](https://github.com/WongKinYiu/yolov7/releases/download/v0.1/coco2017labels-segments.zip) 
 
 Single GPU training
 
 ``` shell
-# train yolov9 models
-python train_dual.py --workers 8 --device 0 --batch 16 --data data/coco.yaml --img 640 --cfg models/detect/yolov9-c.yaml --weights '' --name yolov9-c --hyp hyp.scratch-high.yaml --min-items 0 --epochs 500 --close-mosaic 15
+# train SDO-RepCIN models
+python train_dual.py --workers 8 --device 0 --batch 16 --data data/VisDrone.yaml --img 640 --cfg models/detect/yolov9-c.yaml --weights '' --name yolov9-c --hyp hyp.scratch-high.yaml --min-items 0 --epochs 500 --close-mosaic 15
 
 # train gelan models
 # python train.py --workers 8 --device 0 --batch 32 --data data/coco.yaml --img 640 --cfg models/detect/gelan-c.yaml --weights '' --name gelan-c --hyp hyp.scratch-high.yaml --min-items 0 --epochs 500 --close-mosaic 15
