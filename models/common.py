@@ -846,7 +846,7 @@ class CBFuse(nn.Module):
 
 #################
 
-
+    
 class DetectMultiBackend(nn.Module):
     # YOLO MultiBackend class for python inference on various backends
     def __init__(self, weights='yolo.pt', device=torch.device('cpu'), dnn=False, data=None, fp16=False, fuse=True):
