@@ -20,8 +20,10 @@ MS VisDrone
 
 
 ## Installation
-conda create -n SOD-RepCIN python=3.11
-conda activate SOD-RepCIN
+conda create -n SOD-RepCIN python=3.11 <br>
+
+conda activate SOD-RepCIN <br>
+
 pip install -r requirements.txt
 
 </details>
